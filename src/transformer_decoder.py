@@ -33,7 +33,7 @@ class UtterancePredictor(nn.Module):
 
     def forward(self, memory):
         memory = self.input_proj(memory).transpose(0, 1)  # (seq_len, batch, model_dim)
-        target = self.input_proj(memory[-1:])  # last utterance as decoder input
+        target = memory[-1:] # last utterance as decoder input
         output = self.transformer_decoder(target, memory)
         output = self.output_proj(output)
         return output.squeeze(0)  # (batch, input_dim)
