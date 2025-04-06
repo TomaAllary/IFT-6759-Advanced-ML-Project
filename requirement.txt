@@ -1,4 +1,11 @@
 torch
 torchaudio
+torchvision
 pandas
 numpy
+jupyterlab
+wandb
+matplotlib
+transformers
+pydub
+soundfile
