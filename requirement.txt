@@ -9,3 +9,6 @@ matplotlib
 transformers
 pydub
 soundfile
+scikit-learn
+optuna
+optuna-integration[wandb]

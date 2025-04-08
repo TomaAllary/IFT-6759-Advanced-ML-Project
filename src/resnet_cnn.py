@@ -18,11 +18,15 @@ Paper: Deep Residual Learning for Image Recognition -> arXiv:1512.03385
 
 class ResNetBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, first_conv_stride=1):
+    def __init__(self, in_channels, out_channels, first_conv_stride=1, activation_function='relu'):
 
         super(ResNetBlock, self).__init__()
 
-        self.relu = nn.ReLU()
+        self.activation = nn.ReLU()
+        if activation_function == 'leaky_relu':
+            self.activation = nn.LeakyReLU()
+        elif activation_function == 'gelu':
+            self.activation = nn.GELU()
 
         # FIRST HALF BLOCK #
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=first_conv_stride, padding=1, bias=False)
@@ -57,12 +61,12 @@ class ResNetBlock(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
 
-        x = self.relu(x)
+        x = self.activation(x)
         x = self.conv2(x)
         x = self.bn2(x)
 
         x = x + self.shortcut1(x_shortcut1)
-        x = self.relu(x)
+        x = self.activation(x)
 
         # SECOND HALF BLOCK #
         x_shortcut2 = x
@@ -70,34 +74,38 @@ class ResNetBlock(nn.Module):
         x = self.conv3(x)
         x = self.bn3(x)
 
-        x = self.relu(x)
+        x = self.activation(x)
         x = self.conv4(x)
         x = self.bn4(x)
 
         x = x + self.shortcut2(x_shortcut2)
-        x = self.relu(x)
+        x = self.activation(x)
 
         return x
 
 
 class ResNetCNN(nn.Module):
-    def __init__(self, num_emotion=6):
+    def __init__(self, activation_function='relu', num_emotion=7):
         super(ResNetCNN, self).__init__()
 
         # CONV formula
         # out = ( (in + 2*pad - kernel_size) / stride ) + 1
         # *we don't use padding here*
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
 
-        self.relu = nn.ReLU()
+        self.activation = nn.ReLU()
+        if activation_function == 'leaky_relu':
+            self.activation = nn.LeakyReLU()
+        elif activation_function == 'gelu':
+            self.activation = nn.GELU()
 
 
-        self.layer1 = ResNetBlock(64, 64, first_conv_stride=1)  # (32 - 1)/1 + 1 = out = 32
-        self.layer2 = ResNetBlock(64, 128, first_conv_stride=2)  # (32 - 1)/2 + 1 = out = 16
-        self.layer3 = ResNetBlock(128, 256, first_conv_stride=2)  # (16 - 1)/2 + 1 = out = 8
-        self.layer4 = ResNetBlock(256, 512, first_conv_stride=2)  # (8 - 1)/2 + 1 = out = 4
+        self.layer1 = ResNetBlock(64, 64, first_conv_stride=1, activation_function=activation_function)  # (32 - 1)/1 + 1 = out = 32
+        self.layer2 = ResNetBlock(64, 128, first_conv_stride=2, activation_function=activation_function)  # (32 - 1)/2 + 1 = out = 16
+        self.layer3 = ResNetBlock(128, 256, first_conv_stride=2, activation_function=activation_function)  # (16 - 1)/2 + 1 = out = 8
+        self.layer4 = ResNetBlock(256, 512, first_conv_stride=2, activation_function=activation_function)  # (8 - 1)/2 + 1 = out = 4
 
         self.avgpool = nn.AdaptiveAvgPool2d(output_size=1)  # pool each 4x4 img -> out = 10, 512
         self.linear1 = nn.Linear(512, 1024)
@@ -107,11 +115,13 @@ class ResNetCNN(nn.Module):
         self.linear3 = nn.Linear(512, num_emotion)
 
     def forward(self, images):
+        # Add channel dimension for single-channel (grayscale) images
+        x = images.unsqueeze(1)
 
         # First conv + Blocks
-        x = self.conv1(images)
+        x = self.conv1(x)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = self.activation(x)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
@@ -123,10 +133,10 @@ class ResNetCNN(nn.Module):
 
         # FC Layers
         x = self.linear1(x)
-        x = self.relu(x)
+        x = self.activation(x)
         x = self.ff_dropout1(x)
         x = self.linear2(x)
-        x = self.relu(x)
+        x = self.activation(x)
         x = self.ff_dropout2(x)
         x = self.linear3(x)
 

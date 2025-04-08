@@ -104,8 +104,9 @@ class ConversationProcessor_CNN():
         for file in audio_files:
             parts = file.split("_")  # Extract dialogue number
             if len(parts) >= 2:
-                dialogue_num = parts[0]  # First part is the dialogue ID
-                dialogue_dict[dialogue_num].append(file)
+                if parts[0].startswith("dia"):
+                    dialogue_num = parts[0]  # First part is the dialogue ID
+                    dialogue_dict[dialogue_num].append(file)
 
         # Sort files by utterance ID within each dialogue
         for dialogue in dialogue_dict:
