@@ -31,8 +31,7 @@
 \begin{document}
 
 \twocolumn[
-\icmltitle{Submission and Formatting Instructions for \\
-           International Conference on Machine Learning (ICML 2018)}
+\icmltitle{Multimodal Emotion Prediction in Group Conversation}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -50,26 +49,13 @@
 \icmlsetsymbol{equal}{*}
 
 \begin{icmlauthorlist}
-\icmlauthor{Aeiau Zzzz}{equal,to}
-\icmlauthor{Bauiu C.~Yyyy}{equal,to,goo}
-\icmlauthor{Cieua Vvvvv}{goo}
-\icmlauthor{Iaesut Saoeu}{ed}
-\icmlauthor{Fiuea Rrrr}{to}
-\icmlauthor{Tateu H.~Yasehe}{ed,to,goo}
-\icmlauthor{Aaoeu Iasoh}{goo}
-\icmlauthor{Buiui Eueu}{ed}
-\icmlauthor{Aeuia Zzzz}{ed}
-\icmlauthor{Bieea C.~Yyyy}{to,goo}
-\icmlauthor{Teoau Xxxx}{ed}
-\icmlauthor{Eee Pppp}{ed}
+\icmlauthor{TOMA ALLARY,}{}
+\icmlauthor{THIERRY BÉDARD-CORTEY,}{}
+\icmlauthor{PHILIPPE BERGERONI,}{}
+\icmlauthor{YUAN LI}{}
 \end{icmlauthorlist}
 
-\icmlaffiliation{to}{Department of Computation, University of Torontoland, Torontoland, Canada}
-\icmlaffiliation{goo}{Googol ShallowMind, New London, Michigan, USA}
-\icmlaffiliation{ed}{School of Computation, University of Edenborrow, Edenborrow, United Kingdom}
 
-\icmlcorrespondingauthor{Cieua Vvvvv}{c.vvvvv@googol.com}
-\icmlcorrespondingauthor{Eee Pppp}{ep@eden.co.uk}
 
 % You may provide any keywords that you
 % find helpful for describing your paper; these are used to populate
@@ -91,10 +77,61 @@
 \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-This document provides a basic paper template and submission guidelines.
-Abstracts must be a single paragraph, ideally between 4--6 sentences long.
-Gross violations will trigger corrections at the camera-ready phase.
+Emotion prediction in group conversations is a challenging task due to the complexity of human interactions and the multimodal nature of emotional expressions.This project aims to develop a multimodal model that integrates textual and audio features for emotion prediction in group conversations. It combines RoBERTa for text embeddings, WavLM for audio embeddings, and a transformer-based fusion layer to enhance emotion recognition. The project is based on the study "Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction and Recognition in Conversation"[1].
 \end{abstract}
+
+\section{Introduction}
+Human emotions are important for the  communication. In recent years, deep learning has been achieving tremendous success on numerous machine learning
+applications. In natural language and speech processing areas, In recent years, conversational AI has huge growth — from virtual assistants to customer support chatbots. But there’s still a big gap: most systems don’t understand how we feel.
+That’s why emotion-aware systems are so valuable — they enable more natural, empathetic, and human-like interactions.In this project, Our goal is to  build a multimodal machine learning model that could predict the next emotion in a group conversation using both previous audio and text.This work could serve as the basis for applications such as social robots, therapeutic robots and intelligent tutoring systems. 
+
+\section{Relate Work}
+There are three major approaches commonly used in emotion detection models.
+First is RNN-based models, which are good for temporal sequences but suffer with long-term dependencies and slow processing. 
+The second is Transformer-based models, which excel at capturing long-range dependencies and can process data in parallel — though they are resource-intensive.
+The third is Graph-based models, which represent conversations as interactions between speakers, allowing them to infer emotions based on relationships. These models are powerful but often complex to implement.
+Our project mainly leveraged transformer-based models for their strong performance on language and speech tasks.
+
+ This study [1] explores the extraction and fusion of emotional cues from multiple modalities, including text and audio, to enhance emotion prediction in conversations. The authors propose a transformer-based fusion layer to combine embeddings from different modalities, achieving state-of-the-art results in emotion recognition tasks.
+ 
+\subsection{RoBERTa}
+RoBERTa (Robustly Optimized BERT Pretraining Approach) is a transformer-based language model from Facebook AI was trained on 160 GB of data, and is known for its strong contextual understanding.
+Emotions in dialogue are often subtle and depend heavily on context. RoBERTa’s semantic capabilities allowed us to detect those nuances and make better emotion predictions.
+\subsection{WavLM}
+WavLM is a large-scale self-supervised learning model developed by Microsoft for comprehensive speech processing tasks. It is designed to learn rich, universal representations from raw audio.
+WavLM builds on wav2vec 2.0 and is specially designed to pick up features like tone, rhythm, and pitch — all of which are essential for emotion analysis.
+It also supports a wide range of tasks like speaker identification and emotion recognition, making it ideal for multimodal fusion.
+
+
+\section{Method}
+\section{ Task Definition}
+Emotion Prediction in Conversation (EPC) In a multi-modal
+multi-party (or dyadic) dialogue containing text and audio
+D = {(u1, s1), (u2, s2), ..., (uN, sN)}, where (ui, si) represents
+the ith utterance-speaker pair in the conversation, N is
+the number of utterances in the dialogue. EPC aims to predict
+the emotion category label en+1 of the future utterancearXiv
+speaker pair (un+1, sn+1) by given the historical dialogues
+{(u1, s1), (u2, s2), ..., (un, sn)}.
+
+\subsection{Dataset}
+MELD is a popular dataset for
+tasks involving the analysis of emotions expressed by multiple
+speakers. It encompasses a collection of over 1400 dialogues
+and 13,000 speech instances extracted from the television show
+Friends. Emotion annotation in the dataset includes: neutral,
+happiness, surprise, sadness, anger, disgust, and fear.
+
+\section{Experiments}
+For our experiments, we utilize pre-trained wavLM and RoBERTa
+models to extract 768-dimensional features ，then use serval different architectures to predict next emotion.
+architecture 1
+architecture 2
+architecture 3
+\subsection{Baseline}
+
+\subsection{Evaluation Methods}
+
 
 \section{Electronic Submission}
 \label{submission}
@@ -130,26 +167,6 @@ camera-ready copies. Here is a brief summary:
 
 \subsection{Submitting Papers}
 
-\textbf{Paper Deadline:} The deadline for paper submission that is
-advertised on the conference website is strict. If your full,
-anonymized, submission does not reach us on time, it will not be
-considered for publication. There is no separate abstract submission.
-
-\textbf{Anonymous Submission:} ICML uses double-blind review: no identifying
-author information may appear on the title page or in the paper
-itself. Section~\ref{author info} gives further details.
-
-\textbf{Simultaneous Submission:} ICML will not accept any paper which,
-at the time of submission, is under review for another conference or
-has already been published. This policy also applies to papers that
-overlap substantially in technical content with conference papers
-under review or previously published. ICML submissions must not be
-submitted to other conferences during ICML's review period. Authors
-may submit to ICML substantially different versions of journal papers
-that are currently under review by the journal, but not yet accepted
-at the time of submission. Informal publications, such as technical
-reports or papers in workshop proceedings which do not appear in
-print, do not fall under these restrictions.
 
 \medskip
 
@@ -173,23 +190,7 @@ two commands:
 dvips -Ppdf -tletter -G0 -o paper.ps paper.dvi
 ps2pdf paper.ps
 \end{verbatim}}
-It is a zero following the ``-G'', which tells dvips to use
-the config.pdf file. Newer \TeX\ distributions don't always need this
-option.
 
-Using \texttt{pdflatex} rather than \texttt{latex}, often gives better
-results. This program avoids the Type-3 font problem, and supports more
-advanced features in the \texttt{microtype} package.
-
-\textbf{Graphics files} should be a reasonable size, and included from
-an appropriate format. Use vector formats (.eps/.pdf) for plots,
-lossless bitmap formats (.png) for raster graphics with sharp lines, and
-jpeg for photo-like images.
-
-The style file uses the \texttt{hyperref} package to make clickable
-links in documents. If this causes problems for you, add
-\texttt{nohyperref} as one of the options to the \texttt{icml2018}
-usepackage statement.
 
 
 \subsection{Submitting Final Camera-Ready Copy}
@@ -479,70 +480,6 @@ top or bottom of the page.
 
 \subsection{Citations and References}
 
-Please use APA reference format regardless of your formatter
-or word processor. If you rely on the \LaTeX\/ bibliographic
-facility, use \texttt{natbib.sty} and \texttt{icml2018.bst}
-included in the style-file package to obtain this format.
-
-Citations within the text should include the authors' last names and
-year. If the authors' names are included in the sentence, place only
-the year in parentheses, for example when referencing Arthur Samuel's
-pioneering work \yrcite{Samuel59}. Otherwise place the entire
-reference in parentheses with the authors and year separated by a
-comma \cite{Samuel59}. List multiple references separated by
-semicolons \cite{kearns89,Samuel59,mitchell80}. Use the `et~al.'
-construct only for citations with three or more authors or after
-listing all authors to a publication in an earlier reference \cite{MachineLearningI}.
-
-Authors should cite their own work in the third person
-in the initial version of their paper submitted for blind review.
-Please refer to Section~\ref{author info} for detailed instructions on how to
-cite your own papers.
-
-Use an unnumbered first-level section heading for the references, and use a
-hanging indent style, with the first line of the reference flush against the
-left margin and subsequent lines indented by 10 points. The references at the
-end of this document give examples for journal articles \cite{Samuel59},
-conference publications \cite{langley00}, book chapters \cite{Newell81}, books
-\cite{DudaHart2nd}, edited volumes \cite{MachineLearningI}, technical reports
-\cite{mitchell80}, and dissertations \cite{kearns89}.
-
-Alphabetize references by the surnames of the first authors, with
-single author entries preceding multiple author entries. Order
-references for the same authors by year of publication, with the
-earliest first. Make sure that each reference includes all relevant
-information (e.g., page numbers).
-
-Please put some effort into making references complete, presentable, and
-consistent. If using bibtex, please protect capital letters of names and
-abbreviations in titles, for example, use \{B\}ayesian or \{L\}ipschitz
-in your .bib file.
-
-\subsection{Software and Data}
-
-We strongly encourage the publication of software and data with the
-camera-ready version of the paper whenever appropriate. This can be
-done by including a URL in the camera-ready copy. However, do not
-include URLs that reveal your institution or identity in your
-submission for review. Instead, provide an anonymous URL or upload
-the material as ``Supplementary Material'' into the CMT reviewing
-system. Note that reviewers are not required to look at this material
-when writing their review.
-
-% Acknowledgements should only appear in the accepted version.
-\section*{Acknowledgements}
-
-\textbf{Do not} include acknowledgements in the initial version of
-the paper submitted for blind review.
-
-If a paper is accepted, the final camera-ready version can (and
-probably should) include acknowledgements. In this case, please
-place such acknowledgements in an unnumbered section at the
-end of the paper. Typically, this will include thanks to reviewers
-who gave useful comments, to colleagues who contributed to the ideas,
-and to funding agencies and corporate sponsors that provided financial
-support.
-
 
 % In the unusual situation where you want a paper to appear in the
 % references without citing it in the main text, use \nocite
@@ -551,30 +488,6 @@ support.
 \bibliography{example_paper}
 \bibliographystyle{icml2018}
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% DELETE THIS PART. DO NOT PLACE CONTENT AFTER THE REFERENCES!
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-\section{Do \emph{not} have an appendix here}
-
-\textbf{\emph{Do not put content after the references.}}
-%
-Put anything that you might normally include after the references in a separate
-supplementary file.
-
-We recommend that you build supplementary material in a separate document.
-If you must create one PDF and cut it up, please be careful to use a tool that
-doesn't alter the margins, and that doesn't aggressively rewrite the PDF file.
-pdftk usually works fine. 
-
-\textbf{Please do not use Apple's preview to cut off supplementary material.} In
-previous years it has altered margins, and created headaches at the camera-ready
-stage. 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \end{document}
