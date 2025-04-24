@@ -31,10 +31,9 @@ corresponding to the longest length of (n+m). Or something close and chop longer
 
 class CNNClassifier(nn.Module):
 
-    def __init__(self, activation_function='relu', num_emotions=7):
+    def __init__(self, activation_function='relu', num_emotions=7, truncated_samples=True):
         super(CNNClassifier, self).__init__()
-        self.is_processing_v1 = False;
-        self.fc_size = 6144 if self.is_processing_v1 else 258048
+        self.fc_size = 6144 if truncated_samples else 258048
 
         self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(8)
@@ -151,10 +150,9 @@ class CNNClassifier2(nn.Module):
 
 class CNNClassifier3(nn.Module):
 
-    def __init__(self, activation_function='relu', num_emotions=7):
+    def __init__(self, activation_function='relu', num_emotions=7, truncated_samples=True):
         super(CNNClassifier, self).__init__()
-        self.is_processing_v1 = False;
-        self.fc_size = 6144 if self.is_processing_v1 else 258048
+        self.fc_size = 6144 if truncated_samples else 258048
 
         self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1)
         self.bn1 = nn.BatchNorm2d(8)
