@@ -33,6 +33,8 @@ class CNNClassifier(nn.Module):
 
     def __init__(self, activation_function='relu', num_emotions=7):
         super(CNNClassifier, self).__init__()
+        self.is_processing_v1 = False;
+        self.fc_size = 6144 if self.is_processing_v1 else 258048
 
         self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(8)
@@ -52,7 +54,7 @@ class CNNClassifier(nn.Module):
 
         self.drop2d = nn.Dropout2d(0.2)
         self.dropout = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(6144, num_emotions)
+        self.fc1 = nn.Linear(self.fc_size, num_emotions)
 
         self.activation = nn.ReLU()
         if activation_function == 'leaky_relu':
@@ -142,6 +144,62 @@ class CNNClassifier2(nn.Module):
         x = self.activation(x)
         x = self.global_pool(x)
 
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc1(x)
+        return x
+
+
+class CNNClassifier3(nn.Module):
+
+    def __init__(self, activation_function='relu', num_emotions=7):
+        super(CNNClassifier, self).__init__()
+        self.is_processing_v1 = False;
+        self.fc_size = 6144 if self.is_processing_v1 else 258048
+
+        self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1)
+        self.bn1 = nn.BatchNorm2d(8)
+        self.pool1 = nn.MaxPool2d(4, 2)
+
+        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1)
+        self.bn2 = nn.BatchNorm2d(16)
+        self.pool2 = nn.MaxPool2d(4, 2)
+
+        self.conv3 = nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1)
+        self.bn3 = nn.BatchNorm2d(32)
+        self.pool3 = nn.AvgPool2d(4, 2)
+
+        self.conv4 = nn.Conv2d(32, 16, kernel_size=3, stride=2, padding=1)
+        self.bn4 = nn.BatchNorm2d(16)
+        self.pool4 = nn.AvgPool2d(4, 2)
+
+        self.conv5 = nn.Conv2d(16, 8, kernel_size=3, stride=2, padding=1)
+        self.bn5 = nn.BatchNorm2d(8)
+        self.pool5 = nn.AvgPool2d(4, 2)
+
+        self.drop2d = nn.Dropout2d(0.2)
+        self.dropout = nn.Dropout(0.5)
+        self.fc1 = nn.Linear(6000, num_emotions)
+
+        self.activation = nn.ReLU()
+        if activation_function == 'leaky_relu':
+            self.activation = nn.LeakyReLU()
+        elif activation_function == 'gelu':
+            self.activation = nn.GELU()
+
+    def forward(self, x):
+        x = x.unsqueeze(1)
+
+        x = self.pool1(self.activation(self.bn1(self.conv1(x))))
+        x = self.drop2d(x)
+        x = self.pool2(self.activation(self.bn2(self.conv2(x))))
+        x = self.drop2d(x)
+        x = self.pool3(self.activation(self.bn3(self.conv3(x))))
+        x = self.drop2d(x)
+        x = self.pool4(self.activation(self.bn4(self.conv4(x))))
+        x = self.drop2d(x)
+        x = self.pool5(self.activation(self.bn5(self.conv5(x))))
+
+        x = self.dropout(x)
         x = x.reshape(x.shape[0], -1)
         x = self.fc1(x)
         return x

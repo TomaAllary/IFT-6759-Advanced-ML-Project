@@ -11,6 +11,7 @@ from pydub import AudioSegment
 from collections import defaultdict
 import pickle
 
+
 class ConversationProcessor_CNN():
 
     """
@@ -192,7 +193,9 @@ class ConversationProcessor_CNN():
         print("Extracting AUDIO and TEXT features....")
 
         # Dictionary to store combined features
-        combined_features_list_v2 = []
+        audio_features_list = []
+        text_features_list = []
+
         combined_features_list_v2_labels = []
         combined_features_list_v2_labels_ID = []
 
@@ -215,8 +218,9 @@ class ConversationProcessor_CNN():
                 audio_features = self.extract_audio_features(mp4_path)
                 text_features = self.extract_text_features(utterance)
 
-                combined_features = self.combine_audio_text_features(audio_features, text_features)
-                combined_features_list_v2.append(combined_features)
+                audio_features_list.append(audio_features)
+                text_features_list.append(text_features)
+
                 combined_features_list_v2_labels.append(label)
                 combined_features_list_v2_labels_ID.append(dialogue_ID)
 
@@ -224,8 +228,10 @@ class ConversationProcessor_CNN():
                 print(f"Error processing row {index}: {e}")
                 continue  # Continue with the next dialogue
 
-        # Convert list to a single tensor
-        final_tensor_conversion_v2 = torch.cat(combined_features_list_v2, dim=0)
+        # Combine and use max_length
+        comined_features_tensor = self.combine_audio_text_features(audio_features_list, text_features_list)
+
+        # Convert label to df
         final_tensor_conversion_v2_labels = pd.DataFrame(
             combined_features_list_v2_labels,
             index=combined_features_list_v2_labels_ID,
@@ -234,12 +240,12 @@ class ConversationProcessor_CNN():
 
         print("Finished extracting AUDIO and TEXT features and combining them!")
 
-        print(f"Final tensor shape: {final_tensor_conversion_v2.shape}")  # Expected: (num_dialogues, max_seq_length, 1536)
+        print(f"Final tensor shape: {comined_features_tensor.shape}")  # Expected: (num_dialogues, max_seq_length, 1536)
 
         # Save the tensor to a .pkl file
         # Save labels to a .csv file
         with open(self.CODE_FILENAME, "wb") as f:
-            pickle.dump(final_tensor_conversion_v2, f)
+            pickle.dump(comined_features_tensor, f)
             final_tensor_conversion_v2_labels.to_csv(self.CODE_LABEL_FILENAME)
 
         print(f"Codes/Embeddings Tensor saved to {self.CODE_FILENAME}")
@@ -272,10 +278,7 @@ class ConversationProcessor_CNN():
 
         audio_features = outputs.last_hidden_state.cpu()  # (1, audio_seq_length, 768)
 
-        # Resize sequence length to exactly 128
-        audio_features = torch.nn.functional.interpolate(audio_features.permute(0, 2, 1), size=128, mode="linear").permute(0, 2, 1)
-
-        return audio_features  # Shape: (1, audio_seq_length resize to 128, 768) [1, 128, 768])
+        return audio_features  # Shape: (1, audio_seq_length, 768)
 
 
     #################################### TEXT FEATURE EXTRACT ####################################
@@ -289,15 +292,41 @@ class ConversationProcessor_CNN():
 
         text_features = outputs.last_hidden_state.cpu()
 
-        # Resize sequence length to exactly 128
-        text_features = torch.nn.functional.interpolate(text_features.permute(0, 2, 1), size=128, mode="linear").permute(0, 2, 1)
-
-        return text_features  # Shape: (1, text_seq_length resize to 128, 768)  [1, 128, 768])
+        return text_features  # Shape: (1, text_seq_length, 768)
 
 
-    def combine_audio_text_features(self, audio_features, text_features):
-        return torch.cat((audio_features, text_features), dim=-1)  # Shape: (1, 128, 1536)
+    def combine_audio_text_features(self, audio_features_list, text_features_list):
+        # Determine max sequence length across both lists
+        max_audio_len = max(tensor.shape[1] for tensor in audio_features_list)
+        max_text_len = max(tensor.shape[1] for tensor in text_features_list)
+        max_len = max(max_audio_len, max_text_len)
 
+        padded_audio_features, padded_text_features = self.pad_features_same_length(audio_features_list, text_features_list, max_len)
+        padded_audio_features = torch.cat(padded_audio_features, dim=0)
+        padded_text_features = torch.cat(padded_text_features, dim=0)
+
+        return torch.cat((padded_audio_features, padded_text_features), dim=-1)  # Shape: (n, max_len, 1536)
+
+    def pad_features_same_length(self, audio_features, text_features, max_length):
+        padded_audio = []
+        for audio_tensor in audio_features:
+            pad_size = max_length - audio_tensor.shape[1]
+            if pad_size > 0:
+                pad_tensor = torch.nn.functional.pad(audio_tensor, (0, 0, 0, pad_size))  # Pad sequence dim
+                padded_audio.append(pad_tensor)
+            else:
+                padded_audio.append(audio_tensor)
+
+        padded_text = []
+        for text_tensor in text_features:
+            pad_size = max_length - text_tensor.shape[1]
+            if pad_size > 0:
+                pad_tensor = torch.nn.functional.pad(text_tensor, (0, 0, 0, pad_size))  # Pad sequence dim
+                padded_text.append(pad_tensor)
+            else:
+                padded_text.append(text_tensor)
+
+        return padded_audio, padded_text
 
 
 
