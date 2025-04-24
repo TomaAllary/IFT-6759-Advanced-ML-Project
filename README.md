@@ -16,7 +16,7 @@ pip install -r requirement.txt
 ### Creating processed datasets
 - From https://github.com/declare-lab/MELD/tree/master, you can download the zip file or simply click [here](http://web.eecs.umich.edu/~mihalcea/downloads/MELD.Raw.tar.gz)
 - Make sure you unzip Train and Test set to have this exact file hierarchy (highlighted files/folders): 
- ![Alt text](https://github.com/TomaAllary/IFT-6759-Advanced-ML-Project/README_IMGs/MELD_files_hierarchy.png)
+ ![Alt text](https://github.com/TomaAllary/IFT-6759-Advanced-ML-Project/blob/main/README_IMGs/MELD_files_hierarchy.png)
 ** If a xxx_sent_emo.csv is missing from zip file, you can retrieve it from github page's data folder directly**
 - Open *cnn_emotion_prediction_MELD.ipynb* notebook and run the second cell once for both train and test informations. You should now have a hierarchy similar to above image.
 
