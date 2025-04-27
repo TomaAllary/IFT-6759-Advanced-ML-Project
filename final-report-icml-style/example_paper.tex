@@ -26,7 +26,7 @@
 
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
-\icmltitlerunning{Submission and Formatting Instructions for ICML 2018}
+\icmltitlerunning{IFT6759 - Advanced ML Projects - Final Report}
 
 \begin{document}
 
@@ -51,11 +51,9 @@
 \begin{icmlauthorlist}
 \icmlauthor{TOMA ALLARY,}{}
 \icmlauthor{THIERRY BÉDARD-CORTEY,}{}
-\icmlauthor{PHILIPPE BERGERONI,}{}
+\icmlauthor{PHILIPPE BERGERON,}{}
 \icmlauthor{YUAN LI}{}
 \end{icmlauthorlist}
-
-
 
 % You may provide any keywords that you
 % find helpful for describing your paper; these are used to populate
@@ -74,7 +72,7 @@
 % Remove it (just {}) if you do not need this facility.
 
 %\printAffiliationsAndNotice{}  % leave blank if no need to mention equal contribution
-\printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
+% \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
 Emotion prediction in group conversations is a challenging task due to the complexity of human interactions and the multimodal nature of emotional expressions.This project aims to develop a multimodal model that integrates textual and audio features for emotion prediction in group conversations. It combines RoBERTa for text embeddings, WavLM for audio embeddings, and a transformer-based fusion layer to enhance emotion recognition. The project is based on the study "Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction and Recognition in Conversation"[1].
@@ -126,10 +124,6 @@ happiness, surprise, sadness, anger, disgust, and fear.
 Our baseline architecture is from study \cite{ERCFusionModel}.
 As seen in Figure \ref{fig:BaselineArchitecture}, they propose an architecture using both text and audio modalities. They also extract a mel-spectrogram as a third modality from the audio. Their first steps are to extract features from modalities using pre-trained models (i.e. RoBERTa, WaveLM and a Spectrum Extraction Tool)
 
-\colorbox{yellow}{TODO: explain KWRT}\\
-\colorbox{yellow}{TODO: explain Prosody enhencement}\\
-\colorbox{yellow}{TODO: explain Transformer+fusion}\\
-
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.5\textwidth]{Images/EPCFusion_BaselineArchitecture.png}
@@ -138,6 +132,34 @@ language transformer layer, the yellow part represents the pre-trained vision tr
 parts are frozen.}}
   \label{fig:BaselineArchitecture}
 \end{figure}
+
+\subsubsection{KWRT}
+On textual side, they add a bloc of Knowledge-Based Word Relation Tagging (KWRT) before extracting their features. This block aims to give more word relation cues that context alone could not provide. This technique leverage external resources to identifies relationship between two words. Usually this is done through some human involvement in the labelling or learning process. In their specific use-case, their architecture use ConceptNet \cite{speer2018conceptnet}, a knowledge graph that connects words and phrases of natural language with labeled edges.
+
+\subsubsection{Prosody Enhancement}
+As for the waveform, the second modality, they use what they call a "Prosody Enhancement". Prosody is the study of intonation, stress and rhythm of spoken audio. They enhance the emotional cues given by the audio through a fine-tuned encoder \cite{yang2022speech}. Their claim is that this module extract and amplify emotional cues.
+
+\subsubsection{Transformer module}
+\colorbox{yellow}{TODO: explain Transformer module}\\
+
+\subsubsection{Fusion module}
+\colorbox{yellow}{TODO: explain fusion module}\\
+
+
+
+\subsection{First architecture draft}
+Even though the baseline model yield respectable results, having such complexity and that many components can be complex to implement, train and deploy. Hence, our main idea is to build a simpler architecture that result in similar performance with fewer parameters and less complexity.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{Images/architecture_draft.png}
+  \caption{\textit{First draft of our proposed simplified architecture illustrating the core modules used where $N$ is the length of extracted features sequence.}}
+  \label{fig:DraftArchitecture}
+\end{figure}
+
+We decided to remove some of the proposed modules to keep only the core modules that can grasp the context of a conversation. Intuitively, we pruned the spectrogram extraction, the third modality, as WaveLM already has a significant capacity to treat the audio cues.
+Also, KWRT and Prosody Enhancement modules are not in our proposal, see Figure \ref{fig:DraftArchitecture}. This first draft is however not really detailed and require specific solution to fuse both modalities without losing each extracted features. In Figure \ref{fig:DraftArchitecture}, we supposed $N$ is fixed, but in reality, $N$ differ for each conversation and even between both modalities. The next sections cover three different approaches we developed in parallel to tackle these issues and compare the results.
+
 
 \subsection{Convolution Neural Network}
 Our first approach
