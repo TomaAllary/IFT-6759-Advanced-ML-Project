@@ -23,11 +23,11 @@ roberta_model.to(device)
 
 # Get current directory
 BASE_DIR = os.getcwd()
-DATA_DIR = os.path.join(BASE_DIR, "MELD.Raw", "test")
+DATA_DIR = os.path.join(BASE_DIR, "MELD.Raw", "train")
 
-MP4_DIR = os.path.join(DATA_DIR, "output_repeated_splits_test")  # Audio files
-CSV_FILE = os.path.join(BASE_DIR,"MELD.Raw", "test_sent_emo.csv")  # Text utterances
-PICKLE_FILE = os.path.join(BASE_DIR, "features_per_sentence_val.pkl")  # Output file
+MP4_DIR = os.path.join(DATA_DIR, "train_splits")  # Audio files
+CSV_FILE = os.path.join(DATA_DIR, "train_sent_emo.csv")  # Text utterances
+PICKLE_FILE = os.path.join(BASE_DIR, "features_per_sentence_next.pkl")  # Output file
 
 # Load CSV file
 df = pd.read_csv(CSV_FILE)
@@ -100,11 +100,15 @@ data = []
 
 # Process each utterance
 for index, row in df.iterrows():
+    if index + 1 >= len(df):
+        break  # No next row exists
+
+    next_emotion = df.iloc[index + 1]["Emotion"]
+    next_sentiment = df.iloc[index + 1]["Sentiment"]
+
     utterance = row["Utterance"]
     dialogue_id = row["Dialogue_ID"]
     utterance_id = row["Utterance_ID"]
-    emotion = row["Emotion"]   # Get Emotion label
-    sentiment = row["Sentiment"]  # Get Sentiment label
     
     mp4_filename = f'dia{dialogue_id}_utt{utterance_id}.mp4'
     mp4_path = os.path.join(MP4_DIR, mp4_filename)
@@ -130,10 +134,11 @@ for index, row in df.iterrows():
         "Dialogue_ID": dialogue_id,
         "Utterance_ID": utterance_id,
         "Utterance": utterance,
-        "Emotion": emotion,  # Store Emotion label
-        "Sentiment": sentiment,  # Store Sentiment label
-        "Features": combined_features # Convert tensor to list
+        "Emotion": next_emotion,  # <-- Use emotion from the next row
+        "Sentiment": next_sentiment,
+        "Features": combined_features
     })
+
 
 # Create DataFrame
 df_features = pd.DataFrame(data)
