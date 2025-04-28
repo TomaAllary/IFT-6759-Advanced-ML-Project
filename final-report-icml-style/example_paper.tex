@@ -184,6 +184,21 @@ Our first approach
 
 \subsection{Decoder Transformer \& MLP}
 \colorbox{yellow}{TODO}\\
+Our second architecture consists of two components: an utterance decoder and an emotion classifier, trained jointly (Figure~\ref{fig:transf-dec}). Each utterance is represented as a sequence of feature vectors (dimension 1536) extracted with RoBERTa and WavLM. A self-attention pooling first compresses each utterance into a single embedding. The resulting dialogue representation is passed to a transformer decoder (utterance decoder) that predicts the embedding of the next utterance at each timestep. To maintain causality, future utterances are masked during decoding, and learnable positional embeddings are added to the input sequence.
+
+The predicted embeddings are used for two tasks. First, we minimize a cosine similarity loss ($\mathcal{L}_{cosine}$) against the pooled ground-truth embeddings of the next utterance. Second, the predicted embeddings are input into a multi-layer perceptron (MLP) classifier. This classifier contains layer normalization, a hidden GELU layer, dropout and a final output layer to predict emotion labels using cross-entropy loss ($\mathcal{L}_{CE}$) with class weighting and label smoothing. The total training objective is a weighted sum of the classification loss and the cosine similarity loss:
+\[
+\mathcal{L}=\mathcal{L}_{CE}+ \lambda_{cosine} \mathcal{L}_{cosine}
+\]
+where $\lambda_{cosine}$ controls the contribution of the similarity loss. By jointly modeling next-utterance prediction and emotion recognition, the architecture captures both semantic continuity and emotional dynamics across dialogues. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Images/transformer_decoder.png}
+    \caption{Overview of the joint utterance decoding and emotion classification architecture. Textual and audio features extracted from RoBERTa and WavLM are merged and pooled to create utterance embeddings. A Transformer-based utterance decoder predicts the next utterance representation, which is then classified into emotion categories using an MLP. Training minimizes a weighted sum of cross-entropy loss and cosine similarity loss.}
+    \label{fig:transf-dec}
+\end{figure}
+
 
 \subsection{Encoder Transformer \& MLP}
 \colorbox{yellow}{TODO}\\
