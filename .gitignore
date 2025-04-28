@@ -175,3 +175,7 @@ src/MELD.Raw/
 
 # PyPI configuration file
 .pypirc
+/wandb
+/.idea
+/IEMOCAP
+/features
