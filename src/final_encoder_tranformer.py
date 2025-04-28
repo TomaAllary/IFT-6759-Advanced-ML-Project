@@ -39,7 +39,7 @@ class AudioTextTransformer(nn.Module):
 
 # Dataset Class
 class UtteranceDataset(Dataset):
-    def __init__(self, dataframe, label_map, context_size=1):
+    def __init__(self, dataframe, label_map, context_size=2):
         self.data = dataframe.reset_index(drop=True)
         self.label_map = label_map
         self.context_size = context_size
