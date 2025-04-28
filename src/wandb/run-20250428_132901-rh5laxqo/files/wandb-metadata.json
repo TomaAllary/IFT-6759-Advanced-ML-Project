@@ -1,0 +1,42 @@
+{
+  "os": "Windows-10-10.0.19045-SP0",
+  "python": "CPython 3.12.8",
+  "startedAt": "2025-04-28T17:29:04.411349Z",
+  "program": "E:\\IFT6759\\IFT-6759-Advanced-ML-Project\\src\\test_decoder_classifier.py",
+  "codePath": "src\\test_decoder_classifier.py",
+  "git": {
+    "remote": "https://github.com/TomaAllary/IFT-6759-Advanced-ML-Project.git",
+    "commit": "e131296907b262a9c6311e191d8d2106e84e0768"
+  },
+  "email": "thierry-bc@hotmail.com",
+  "root": "E:\\IFT6759\\IFT-6759-Advanced-ML-Project\\src",
+  "host": "DESKTOP-O6NER5P",
+  "executable": "C:\\Users\\Thierry\\anaconda3\\envs\\ift6759\\python.exe",
+  "codePathLocal": "test_decoder_classifier.py",
+  "cpu_count": 6,
+  "cpu_count_logical": 6,
+  "gpu": "NVIDIA GeForce RTX 2060",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "2000381014016",
+      "used": "729250922496"
+    }
+  },
+  "memory": {
+    "total": "17112272896"
+  },
+  "cpu": {
+    "count": 6,
+    "countLogical": 6
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 2060",
+      "memoryTotal": "6442450944",
+      "cudaCores": 1920,
+      "architecture": "Turing"
+    }
+  ],
+  "cudaVersion": "12.7"
+}
