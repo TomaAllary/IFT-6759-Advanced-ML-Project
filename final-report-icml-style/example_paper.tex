@@ -186,6 +186,37 @@ Our first approach
 \colorbox{yellow}{TODO}\\
 
 \subsection{Encoder Transformer \& MLP}
+Our third architecture consists of the following components:
+
+\subsubsection{Input Representation}
+Each utterance is embedded as a fixed-size vector of 1536 dimensions which is the concatenation of WaveLM features $x_1 \in R^{768}$ for the audio modality and RoBERTa features $x_2 \in R^{768}$. Due to the conversational context, a sliding window of adjacent utterances can be aggregated; the window with the best results was 2.
+
+\subsubsection{Transformer Encoder}
+The core of the architecture is a single-layer Transformer Encoder. The encoder processes the 1536-dimensional input using multi-head self-attention (8 heads) and a feed-forward network with an intermediate dimensionality of 1048. Dropout regularization with a rate of 0.45 is applied both within the self-attention mechanism and the feed-forward sublayers to mitigate overfitting.
+
+Formally, for an input feature vector $ x \in {R}^{1536} $, the Transformer Encoder computes:
+
+$$ x' = \text{TransformerEncoder}(x) $$
+
+where self-attention enables the model to reweigh and recontextualize different feature dimensions relative to each other.
+
+\subsubsection{Output Layer}
+The output of the Transformer Encoder is passed through a fully connected linear layer that maps the representation to the target emotion space:
+
+$$\hat{y} = \text{Linear}(x') \in \mathbb{R}^{7}$$
+
+where 7 corresponds to the number of emotion classes: \textit{anger, disgust, fear, joy, neutral, sadness}, and \textit{surprise}.
+
+\subsubsection{Loss Function}
+Training is performed using a weighted cross-entropy loss with label smoothing (smoothing factor = 0.1). Class imbalance is addressed by assigning inverse-frequency weights to each emotion class based on their occurrence in the training data, ensuring that majority classes (i.e. Neutral) are adequately penalized during optimization.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{Images/transformer_encoder.png}
+  \caption{Overview of the joint utterance encoding and emotion classification architecture. Encoder transformer finds a representation of the utterance multimodal features and later classifies it using a fully connected layer. Training minimizes a weighted sum of cross-entropy loss.}
+  \label{fig:transf-dec}
+\end{figure}
+
 \colorbox{yellow}{TODO}\\
 
 
