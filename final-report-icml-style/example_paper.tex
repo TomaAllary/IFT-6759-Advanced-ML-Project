@@ -343,7 +343,6 @@ We can see in training Figures \ref{fig:cnn1_training_metrics}, \ref{fig:cnn2_tr
 Even though we tried multiple regularization methods (label smoothing, dropout, weight decay, early stopping) to help on overfitting and tuning hyperparameter, our effort did not produce any satisfying results. Hence, we focused on other architectures.
 
 \subsection{Decoder Transformer \& MLP}
-\colorbox{yellow}{TODO}\\
 Our second architecture consists of two components: an utterance decoder and an emotion classifier, trained jointly (Figure~\ref{fig:transf-dec}). Each utterance is represented as a sequence of feature vectors (dimension 1536) extracted with RoBERTa and WavLM. A self-attention pooling first compresses each utterance into a single embedding. The resulting dialogue representation is passed to a transformer decoder (utterance decoder) that predicts the embedding of the next utterance at each timestep. To maintain causality, future utterances are masked during decoding, and learnable positional embeddings are added to the input sequence.
 
 The predicted embeddings are used for two tasks. First, we minimize a cosine similarity loss ($\mathcal{L}_{cosine}$) against the pooled ground-truth embeddings of the next utterance. Second, the predicted embeddings are input into a multi-layer perceptron (MLP) classifier. This classifier contains layer normalization, a hidden GELU layer, dropout and a final output layer to predict emotion labels using cross-entropy loss ($\mathcal{L}_{CE}$) with class weighting and label smoothing. The total training objective is a weighted sum of the classification loss and the cosine similarity loss:
@@ -392,17 +391,35 @@ Training is performed using a weighted cross-entropy loss with label smoothing (
   \label{fig:transf-dec}
 \end{figure}
 
-\colorbox{yellow}{TODO}\\
-
-
 \section{Experiments}
-For our experiments, we utilize pre-trained wavLM and RoBERTa
-models to extract 768-dimensional features, then use serval different architectures to predict next emotion.
-architecture 1
-architecture 2
-architecture 3
-\\ \colorbox{yellow}{TODO:}\\
-\textit{Experiments: Comparisons to baselines using metrics (explain what the metrics are), with visualizations in terms of graphs, tables etc. (if you can show more, e.g., qualitative results with images - the better).}\\
+
+\subsection{Setup}
+We evaluate our models on the MELD dataset under the Emotion Prediction in Conversation (EPC) setting, where the goal is to predict the emotion of the final utterance in a dialogue using the preceding context.
+
+\subsection{Results}
+Table~\ref{tab:ours} presents the performance of our models. CNN-1, CNN-2, and CNN-3 are variants with increasing depth or reduced regularization. Our encoder-based transformer model achieves the best macro-F1 score of 22.26\% on the test set, outperforming the CNNs despite significantly lower training accuracy, which indicates better generalization. The decoder-based transformer underperforms in this setting, possibly due to its sequential prediction design, which may not align well with the final-utterance classification task.
+
+\begin{table}[h]
+\centering
+\caption{Performance metrics of our models on MELD.}
+\label{tab:ours}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{Train Acc.} & \textbf{Val. Acc.} & \textbf{Test M-F1} \\
+\midrule
+CNN-1 & 95.57 & 46.94 & 0.10 \\
+CNN-2 & 100.00 & 46.94 & 0.11 \\
+CNN-3 & 100.00 & 41.44 & 0.13 \\
+Transformer Encoder + MLP & 28.27 & 34.50 & \textbf{0.2226} \\
+Transformer Decoder + MLP & -- & -- & 0.1349 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Analysis}
+Interestingly, although CNN-based models achieve perfect training accuracy, their validation and test performance are significantly weaker than those of the transformer encoder, suggesting overfitting. The transformer encoder model generalizes better despite low training accuracy, indicating a more robust representation. Meanwhile, the decoder-based model, which was designed to predict embeddings autoregressively, struggled to match the encoder’s performance on the final utterance classification, likely due to mismatch between training objective and evaluation setup.
 
 
 \section{Discussion}
