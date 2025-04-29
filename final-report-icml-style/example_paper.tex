@@ -159,10 +159,14 @@ As for the waveform, the second modality, they use what they call a "Prosody Enh
 \subsubsection{Transformer module}
 \colorbox{yellow}{TODO: explain Transformer module}\\
 
+
 \subsubsection{Fusion module}
-\colorbox{yellow}{TODO: explain fusion module}\\
+In the two-step multi-modal fusion part, they first
+fuse the text and audio features enhanced in Knowledge-based Word
+Relation Tagging (KWRT) module and a Prosody Enhancement (PE) module , then combine the initial fusion features with the mel-spectrogram extracted from the audio to generate the final multi-modal fusion representation.
 
-
+They use two pre-trained transformer models. For the language features,they utilized BERT (Bidirectional Encoder Representations from Transformers), a seminal model proposed by Devlin et al. in 2018. BERT introduced a deep bidirectional training approach using transformers, allowing the model to understand the context of a word based on both its left and right surroundings. 
+For the vision features, they use Vision Transformer (ViT), introduced by Dosovitskiy et al. in 2021. This model  applies the transformer architecture directly to sequences of image patches. ViT divides an image into fixed-size patches, linearly embeds them, and feeds the sequence into a standard transformer encoder. This design enables the model to capture global dependencies among patches, leading to state-of-the-art performance on image classification tasks when trained at scale. 
 
 \subsection{First architecture draft}
 Even though the baseline model yield respectable results, having such complexity and that many components can be complex to implement, train and deploy. Hence, our main idea is to build a simpler architecture that result in similar performance with fewer parameters and less complexity.
