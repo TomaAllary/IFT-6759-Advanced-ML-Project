@@ -205,9 +205,16 @@ Also, KWRT and Prosody Enhancement modules are not in our proposal, see Figure \
 
 \subsection{Convolution Neural Network}
 For the first architecture, we take the whole conversation except the last utterance $u_N$. What we feed into WaveLm and RoBERTa is the concatenated utterance from $u_1$ to $u_{N-1}$.
-We then have encoded text features of shape $n \ \times$ 768 and encoded audio features of shape $m \ \times$ 768. Since both $n$ and $m$ not necessary equal and are variable for each conversation, we truncate or pad samples. We take a length that make sense with the average produced code length. In our case, we chose to fix all encoded sample to 128 $\times$ 768. Then we combine the two modalities to have 128 $\times$ 1536 tensors. 
+We then have encoded text features of shape $n \ \times$ 768 and encoded audio features of shape $m \ \times$ 768. Since both $n$ and $m$ not necessary equal and are variable for each conversation, we truncate or pad samples. We take a length that make sense with the average produced code length. In our case, we chose to fix all encoded sample to 128 $\times$ 768. Then we combine the two modalities to have 128 $\times$ 1536 tensors. See Figure \ref{fig:cnn_architecture}
 
-The convolution neural network is well suited to find pattern within 2 dimension representations and to reduce the model complexity and dimensionality. This is mainly why we chose to use CNN over classic MLPs that would overfit easily and require more compute due to the size of our inputs.
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{Images/cnn_architecture.png}
+  \caption{CNN architecture and and pre-trained models modules}
+  \label{fig:cnn_architecture}
+\end{figure}
+
+The convolution neural network is well suited to find pattern within 2 dimension representations and to reduce the model complexity and dimensionality. This is mainly why we chose to use CNN over classic MLPs that would overfit easily and require more compute power due to the size of our inputs.
 After trying multiple layer combinations and size (i.e. 4 Conv+Pool , ResNet18..), we obtained our best result using a simple CNN of four convolution layers, four 2 dimensions pooling layers, batch normalization layers and a linear layer of 6144 inputs.
 
 The top three performing models were trained used hyperparameter shown in Table \ref{tab:cnn_hyperparams} .
@@ -404,6 +411,15 @@ architecture 3
 \\ \colorbox{yellow}{TODO:}\\
 \textit{Experiments: Comparisons to baselines using metrics (explain what the metrics are), with visualizations in terms of graphs, tables etc. (if you can show more, e.g., qualitative results with images - the better).}\\
 
+
+\section{Discussion}
+This work has explored different architecture to simplify the proposal of \textit{"Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction
+and Recognition in Conversation"} \cite{ERCFusionModel}. From our experimentation, we saw that some approaches were more performing than others and that some satisfying result can be reached through our simpler architecture.
+Even though our best model did not improve upon the accuracy and macro F1 score of the MELD test set, it proposes a novel architecture with fewer parameters and less complexity. Unfortunately, we could not compare our inference speed with the baseline reference article due to missing accessible data from their side, but we are confident that our solution would have faster inference in a comparable compute context. 
+
+Also, this report could be a step-stone toward an even better and lighter proposal. One of the encountered issue was the size of the MELD dataset that restrained the variety of emotions our models were trained on. The confusion matrices have shown that some emotions were greatly under-represented. Even if we used over sampling to compensate, it does not gives as much of a quality training set as true additional samples. Other datasets exist and, with additional time and efforts on pre-processing, could provide additional cues to our models. RAVDESS \cite{livingstone2018ravdess} and IEMOCAP \cite{busso2008iemocap} datasets are some examples.
+
+In today context, inference time and cost are important aspects of machine learning. We proposed an architecture toward optimizing both and toward more efficient models. Our work lays a foundation for future systems that are not only accurate but also practical and scalable in real-world settings.
 
 \section{Optional sections if needed}
 
