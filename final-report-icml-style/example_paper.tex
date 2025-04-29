@@ -7,6 +7,9 @@
 \usepackage{graphicx}
 \usepackage{subfigure}
 \usepackage{booktabs} % for professional tables
+\usepackage{subcaption}
+\usepackage{dblfloatfix}
+\usepackage{amsmath}
 
 % hyperref makes hyperlinks in the resulting PDF.
 % If your build breaks (sometimes temporarily if a hyperlink spans a page)
@@ -184,6 +187,8 @@ F_{t,a \rightarrow m} = \text{Trans}_v(F_m \oplus \text{MLP}(\hat{v}_{\text{br}}
 \]
 The above results are then used as inputs of two different linear classifiers to obtain the final classification results.
 
+
+
 \subsection{First architecture draft}
 Even though the baseline model yield respectable results, having such complexity and that many components can be complex to implement, train and deploy. Hence, our main idea is to build a simpler architecture that result in similar performance with fewer parameters and less complexity.
 
@@ -199,8 +204,143 @@ Also, KWRT and Prosody Enhancement modules are not in our proposal, see Figure \
 
 
 \subsection{Convolution Neural Network}
-Our first approach
-\colorbox{yellow}{TODO}\\
+For the first architecture, we take the whole conversation except the last utterance $u_N$. What we feed into WaveLm and RoBERTa is the concatenated utterance from $u_1$ to $u_{N-1}$.
+We then have encoded text features of shape $n \ \times$ 768 and encoded audio features of shape $m \ \times$ 768. Since both $n$ and $m$ not necessary equal and are variable for each conversation, we truncate or pad samples. We take a length that make sense with the average produced code length. In our case, we chose to fix all encoded sample to 128 $\times$ 768. Then we combine the two modalities to have 128 $\times$ 1536 tensors. 
+
+The convolution neural network is well suited to find pattern within 2 dimension representations and to reduce the model complexity and dimensionality. This is mainly why we chose to use CNN over classic MLPs that would overfit easily and require more compute due to the size of our inputs.
+After trying multiple layer combinations and size (i.e. 4 Conv+Pool , ResNet18..), we obtained our best result using a simple CNN of four convolution layers, four 2 dimensions pooling layers, batch normalization layers and a linear layer of 6144 inputs.
+
+The top three performing models were trained used hyperparameter shown in Table \ref{tab:cnn_hyperparams} .
+
+\begin{table}[htbp]
+\centering
+\caption{Hyperparameters used in the top three performing CNN models}
+\label{tab:cnn_hyperparams}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+\textbf{Model} & \textbf{Learning Rate} & \textbf{Optimizer} & \textbf{Activation} & \textbf{Batch Size} & \textbf{Weight Decay} & \textbf{Epochs} & \textbf{Dropout} \\ \midrule
+CNN-1          & 0.00003                & AdamW              & Leaky ReLU           & 32                  & 0.0002                 & 150             & None             \\
+CNN-2          & 0.0007                 & AdamW              & Leaky ReLU           & 32                  & 0.0001                 & 30              & 0.5              \\
+CNN-3          & 0.0004                 & AdamW              & ReLU                 & 32                  & 0.00002                & 250             & 0.2              \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Performance metrics of the top three CNN models}
+\label{tab:cnn_metrics}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Model} & \textbf{Train Loss} & \textbf{Train Accuracy (\%)} & \textbf{Validation Accuracy (\%)} & \textbf{Test M-F1} & \textbf{Test W-F1} \\ \midrule
+CNN-1          & 0.6643              & 95.57                         & 46.94                              & 0.10               & 0.3022             \\
+CNN-2          & 0.1155              & 100.00                        & 46.94                              & 0.11               & 0.3190             \\
+CNN-3          & 0.0848              & 100.00                        & 41.44                              & 0.13               & 0.3016             \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure*}[t]
+    \centering
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn1_train_loss.png}
+        \captionof{subfigure}{Train Loss}
+        \label{fig:cnn1_train_loss}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn1_train_acc.png}
+        \captionof{subfigure}{Train Accuracy}
+        \label{fig:cnn1_train_acc}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn1_val_acc.png}
+        \captionof{subfigure}{Validation Accuracy}
+        \label{fig:cnn1_val_acc}
+    \end{minipage}
+
+    \caption{Training metrics for the CNN-1 model over epochs: train loss, train accuracy, and validation accuracy.}
+    \label{fig:cnn1_training_metrics}
+\end{figure*}
+
+\begin{figure*}[t]
+    \centering
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn2_train_loss.png}
+        \captionof{subfigure}{Train Loss}
+        \label{fig:cnn2_train_loss}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn2_train_acc.png}
+        \captionof{subfigure}{Train Accuracy}
+        \label{fig:cnn2_train_acc}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn2_val_acc.png}
+        \captionof{subfigure}{Validation Accuracy}
+        \label{fig:cnn2_val_acc}
+    \end{minipage}
+
+    \caption{Training metrics for the CNN-2 model over epochs: train loss, train accuracy, and validation accuracy.}
+    \label{fig:cnn2_training_metrics}
+\end{figure*}
+
+\begin{figure*}[t]
+    \centering
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn3_train_loss.png}
+        \captionof{subfigure}{Train Loss}
+        \label{fig:cnn3_train_loss}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn3_train_acc.png}
+        \captionof{subfigure}{Train Accuracy}
+        \label{fig:cnn3_train_acc}
+    \end{minipage}
+
+    \vspace*{0.4cm}
+
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/cnn3_val_acc.png}
+        \captionof{subfigure}{Validation Accuracy}
+        \label{fig:cnn3_val_acc}
+    \end{minipage}
+
+    \caption{Training metrics for the CNN-3 model over epochs: train loss, train accuracy, and validation accuracy.}
+    \label{fig:cnn3_training_metrics}
+\end{figure*}
+
+
+We can see in training Figures \ref{fig:cnn1_training_metrics}, \ref{fig:cnn2_training_metrics}, \ref{fig:cnn3_training_metrics} and Table \ref{tab:cnn_metrics} that even though these models were better than the others, the validation metrics keep vacillating without any significant improvement trend.
+Even though we tried multiple regularization methods (label smoothing, dropout, weight decay, early stopping) to help on overfitting and tuning hyperparameter, our effort did not produce any satisfying results. Hence, we focused on other architectures.
 
 \subsection{Decoder Transformer \& MLP}
 \colorbox{yellow}{TODO}\\
