@@ -78,7 +78,7 @@
 % \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-Emotion prediction in group conversations is a challenging task due to the complexity of human interactions and the multimodal nature of emotional expressions.This project aims to develop a multimodal model that integrates textual and audio features for emotion prediction in group conversations. It combines RoBERTa for text embeddings, WavLM for audio embeddings, and a transformer-based fusion layer to enhance emotion recognition. The project is based on the study "Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction and Recognition in Conversation"[1].
+Emotion prediction in group conversations is a challenging task due to the complexity of human interactions and the multimodal nature of emotional expressions.This project aims to develop a multimodal model that integrates textual and audio features for emotion prediction in group conversations. It combines RoBERTa for text embeddings, WavLM for audio embeddings, and a transformer-based fusion layer to enhance emotion recognition. The project is based on the study "Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction and Recognition in Conversation"\cite{ERCFusionModel}.
 \end{abstract}
 
 \section{Introduction}
@@ -86,7 +86,8 @@ Human emotions are important for the  communication. In recent years, deep learn
 applications. In natural language and speech processing areas, conversational AI had a huge growth in recent years — from virtual assistants to customer support chatbots. But there’s still a big gap: most systems don’t understand how we feel.
 That’s why emotion-aware systems are so valuable — they enable more natural, empathetic, and human-like interactions. In this project, Our goal is to  build a multimodal machine learning model that could predict the next emotion in a group conversation using traces of previous audio and text. More specifically, we explore simplified architectures to improve on current existing models that are complex and heavy to train and implement. Light and re-usable architecture are generally more suited for real-life tasks where cost and time are important. This work could serve as the basis for applications such as social robots, therapeutic robots and intelligent tutoring systems. 
 
-\section{Relate Work}
+\section{Related Work}
+\subsection{Major Emotion Detection Models}
 There are three major approaches commonly used in emotion detection models.
 First is RNN-based models, which are good for temporal sequences but suffer with long-term dependencies and slow processing. 
 The second is Transformer-based models, which excel at capturing long-range dependencies and can process data in parallel — though they are resource-intensive.
