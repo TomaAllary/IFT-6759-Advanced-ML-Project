@@ -86,8 +86,6 @@ Human emotions are important for the  communication. In recent years, deep learn
 applications. In natural language and speech processing areas, conversational AI had a huge growth in recent years — from virtual assistants to customer support chatbots. But there’s still a big gap: most systems don’t understand how we feel.
 That’s why emotion-aware systems are so valuable — they enable more natural, empathetic, and human-like interactions. In this project, Our goal is to  build a multimodal machine learning model that could predict the next emotion in a group conversation using traces of previous audio and text. More specifically, we explore simplified architectures to improve on current existing models that are complex and heavy to train and implement. Light and re-usable architecture are generally more suited for real-life tasks where cost and time are important. This work could serve as the basis for applications such as social robots, therapeutic robots and intelligent tutoring systems. 
 
-\colorbox{yellow}{TODO: add contribution}\\
-
 \section{Relate Work}
 There are three major approaches commonly used in emotion detection models.
 First is RNN-based models, which are good for temporal sequences but suffer with long-term dependencies and slow processing. 
@@ -137,8 +135,6 @@ This method allows us to use both modalities at the same time, which improves th
 
 In addition, before extracting features, we combined the audio clips and merged the text utterances for each conversation. Instead of treating each utterance separately, we processed the whole conversation as a single input. For audio, we concatenated the waveform files belonging to the same dialogue into one long audio sequence. For text, we joined the utterances from the same conversation into one long text string. This way, the models could capture the full context of the conversation — including how emotions develop over time — rather than just focusing on isolated sentences. After combining, we extracted features from the full conversation-level audio and text, and then fused them together for downstream emotion prediction.
 
-\colorbox{yellow}{TODO: add image}\\
-
 \subsection{Reference baseline method}
 
 Our baseline architecture is from study \cite{ERCFusionModel}.
@@ -159,14 +155,12 @@ On textual side, they add a bloc of Knowledge-Based Word Relation Tagging (KWRT)
 \subsubsection{Prosody Enhancement}
 As for the waveform, the second modality, they use what they call a "Prosody Enhancement". Prosody is the study of intonation, stress and rhythm of spoken audio. They enhance the emotional cues given by the audio through a fine-tuned encoder \cite{yang2022speech}. Their claim is that this module extract and amplify emotional cues.
 
-\subsubsection{Transformer module}
-\colorbox{yellow}{TODO: explain Transformer module}\\
 
+\subsubsection{Transformer module}
+They adopt a two-step fusion strategy to integrate the bimodal features of text and audio. In transformer module , they integrate multi-modal emotional features.The audio features are treated as the query matrix, while the text modality features are considered as the key-value matrix, enabling the propagation of information between modalities. This results in preliminary complementary fusion features, denoted as Ft,a.
 
 \subsubsection{Fusion module}
-They adopt a two-step fusion strategy to integrate the bimodal features of text and audio. Initially, they utilize a Transformer to integrate multi-modal emotional features. The audio features are treated as the query matrix, while the text modality features are considered as the key-value matrix, enabling the propagation of information between modalities. This results in preliminary complementary fusion features, denoted as $F_{t,a}$.
-
-They use two pre-trained transformer models, represented as $\text{Trans}_l$ and $\text{Trans}_v$. For the language features, they utilize BERT (Bidirectional Encoder Representations from Transformers). For the vision features, they use Vision Transformer (ViT).
+In fusion module , They use two pre-trained transformer models, represented as $\text{Trans}_l$ and $\text{Trans}_v$. For the language features, they utilize BERT (Bidirectional Encoder Representations from Transformers). For the vision features, they use Vision Transformer (ViT).
 
 They perform two symmetric operations. First, taking the spectral domain features $F_m$ as the initial input, they concatenate a trainable bridge vector $v_{\text{br}}$ with $F_m$, and subsequently feed them into a unimodal transformer layer to derive the preliminary feature representation:
 \[
@@ -186,8 +180,6 @@ Symmetrically, using $F_{t,a}$ as the initial input and applying the same operat
 F_{t,a \rightarrow m} = \text{Trans}_v(F_m \oplus \text{MLP}(\hat{v}_{\text{br}}))
 \]
 The above results are then used as inputs of two different linear classifiers to obtain the final classification results.
-
-
 
 \subsection{First architecture draft}
 Even though the baseline model yield respectable results, having such complexity and that many components can be complex to implement, train and deploy. Hence, our main idea is to build a simpler architecture that result in similar performance with fewer parameters and less complexity.
