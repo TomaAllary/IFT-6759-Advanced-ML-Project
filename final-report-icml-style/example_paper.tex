@@ -100,7 +100,11 @@ Our project mainly leveraged transformer-based models for their strong performan
 RoBERTa (Robustly Optimized BERT Pretraining Approach)  \cite{liu2019roberta}is a transformer-based language model developed by Facebook AI. This model significantly enhances the original BERT architecture through several key modifications in its pre-training methodology. Unlike BERT, RoBERTa was trained on a substantially larger dataset, totaling 160 GB of diverse text and code. This extensive training corpus allowed the model to develop a more robust and generalized understanding of language. One of the critical improvements in RoBERTa is the removal of the Next Sentence Prediction (NSP) objective used in BERT, which was found to not consistently improve downstream task performance. Additionally, RoBERTa employs dynamic masking during pre-training, where the masked tokens change in each epoch, forcing the model to learn more effectively from different parts of the input. The model also benefits from being trained with much larger batch sizes, contributing to more stable and efficient learning. RoBERTa's architecture, being based on the transformer, inherently excels at capturing long-range dependencies within text, making it particularly adept at understanding context. In dialogue, emotions are often conveyed subtly and are deeply intertwined with the surrounding linguistic context. RoBERTa's enhanced semantic capabilities, stemming from its extensive training and architectural refinements, enable it to discern these intricate relationships and make more accurate emotion predictions by considering the nuances of the conversational flow and the interplay of words.
 
 \subsection{WavLM}
-WavLM \cite{chen2021wavlm}, short for Waveform Language Model, represents a significant advancement in self-supervised learning for comprehensive speech processing, developed by Microsoft. This large-scale model is meticulously engineered to learn rich, universal representations directly from raw audio waveforms, eliminating the need for extensive manual feature engineering. Building upon the success of the wav2vec 2.0 framework, WavLM introduces innovative techniques to further enhance the quality of learned representations. A key contribution of WavLM is its emphasis on capturing prosodic features like tone, rhythm, and pitch – elements that carry crucial information about a speaker's emotional state. By explicitly modeling these acoustic characteristics, WavLM gains a distinct advantage in tasks such as emotion analysis, where these subtle vocal cues are paramount. Beyond emotional understanding, WavLM demonstrates its versatility by supporting a wide array of speech-related tasks, including speaker identification, automatic speech recognition, and emotion recognition. This broad applicability makes WavLM an exceptionally valuable component for multimodal fusion approaches, where information from different modalities, such as audio and text, can be combined to achieve a more holistic and accurate understanding of communicative signals. Its ability to extract meaningful features from raw audio across various tasks underscores its potential to significantly improve the performance of speech-centric artificial intelligence systems.
+WavLM \cite{chen2021wavlm}, short for Waveform Language Model, is a large-scale speech processing model developed by Microsoft. It is designed to learn universal audio representations directly from raw waveforms, reducing the need for manual feature extraction. Built on the foundation of wav2vec 2.0, WavLM introduces enhancements that improve the quality of learned representations. 
+
+One of its key features is the ability to capture prosodic elements such as tone, rhythm, and pitch, which are crucial for analyzing a speaker's emotional state. By explicitly modeling these acoustic characteristics, WavLM excels in emotion analysis, where subtle vocal cues are essential.
+
+Beyond emotion recognition, WavLM supports various speech-related applications, including speaker identification and automatic speech recognition. Its flexibility makes it highly valuable in multimodal fusion approaches, where audio and text data are integrated to improve the understanding of communicative signals. By extracting meaningful features from raw audio, WavLM enhances the performance of artificial intelligence systems focused on speech processing.
 
 
 \section{ Task Definition}
@@ -114,12 +118,9 @@ speaker pair ($u_{n+1}, s_{n+1}$) by given the historical dialogues
 ${(u_1, s_1), (u_2, s_2), ..., (u_n, s_n)}$.
 
 \subsection{Dataset}
-MELD is a popular dataset for
-tasks involving the analysis of emotions expressed by multiple
-speakers. It encompasses a collection of over 1400 dialogues
-and 13,000 speech instances extracted from the television show
-Friends. Emotion annotation in the dataset includes: neutral,
-happiness, surprise, sadness, anger, disgust, and fear.
+MELD is a popular dataset for tasks involving the analysis of emotions expressed by multiple speakers. It encompasses a collection of over 1400 dialogues and 13,000 speech instances extracted from the television show
+Friends. Emotion annotation in the dataset includes: neutral, happiness, surprise, sadness, anger, disgust, and fear.
+A key distinction of MELD lies in its representation of multi-party conversations, involving more than two speakers in numerous interactions, thus presenting a more complex and ecologically valid scenario compared to dyadic datasets. 
 
 \section{Method}
 \subsection{Data Preprocess and Feature Extraction}
