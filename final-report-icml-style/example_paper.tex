@@ -159,7 +159,7 @@ As for the waveform, the second modality, they use what they call a "Prosody Enh
 
 
 \subsubsection{Transformer module}
-They adopt a two-step fusion strategy to integrate the bimodal features of text and audio. In transformer module , they integrate multi-modal emotional features.The audio features are treated as the query matrix, while the text modality features are considered as the key-value matrix, enabling the propagation of information between modalities. This results in preliminary complementary fusion features, denoted as Ft,a.
+They adopt a two-step fusion strategy to integrate the bimodal features of text and audio. In transformer module , they integrate multi-modal emotional features.The audio features are treated as the query matrix, while the text modality features are considered as the key-value matrix, enabling the propagation of information between modalities. This results in preliminary complementary fusion features, denoted as $F_{t,a}$.
 
 \subsubsection{Fusion module}
 In fusion module , They use two pre-trained transformer models, represented as $\text{Trans}_l$ and $\text{Trans}_v$. For the language features, they utilize BERT (Bidirectional Encoder Representations from Transformers). For the vision features, they use Vision Transformer (ViT).
@@ -243,7 +243,128 @@ CNN-3          & 0.0848              & 100.00                        & 41.44    
 }
 \end{table}
 
-\begin{figure*}[t]
+We can see in training Figures \ref{fig:cnn1_training_metrics}, \ref{fig:cnn2_training_metrics}, \ref{fig:cnn3_training_metrics} and Table \ref{tab:cnn_metrics} that even though these models were better than the others, the validation metrics keep vacillating without any significant improvement trend.
+Even though we tried multiple regularization methods (label smoothing, dropout, weight decay, early stopping) to help on overfitting and tuning hyperparameter, our effort did not produce any satisfying results. Hence, we focused on other architectures.
+
+\subsection{Decoder Transformer \& MLP}
+Our second architecture consists of two components: an utterance decoder and an emotion classifier, trained jointly (Figure~\ref{fig:transf-dec}). Each utterance is represented as a sequence of feature vectors (dimension 1536) extracted with RoBERTa and WavLM. A self-attention pooling first compresses each utterance into a single embedding. The resulting dialogue representation is passed to a transformer decoder (utterance decoder) that predicts the embedding of the next utterance at each timestep. To maintain causality, future utterances are masked during decoding, and learnable positional embeddings are added to the input sequence.
+
+The predicted embeddings are used for two tasks. First, we minimize a cosine similarity loss ($\mathcal{L}_{cosine}$) against the pooled ground-truth embeddings of the next utterance. Second, the predicted embeddings are input into a multi-layer perceptron (MLP) classifier. This classifier contains layer normalization, a hidden GELU layer, dropout and a final output layer to predict emotion labels using cross-entropy loss ($\mathcal{L}_{CE}$) with class weighting and label smoothing. The total training objective is a weighted sum of the classification loss and the cosine similarity loss:
+\[
+\mathcal{L}=\mathcal{L}_{CE}+ \lambda_{cosine} \mathcal{L}_{cosine}
+\]
+where $\lambda_{cosine}$ controls the contribution of the similarity loss. By jointly modeling next-utterance prediction and emotion recognition, the architecture captures both semantic continuity and emotional dynamics across dialogues. 
+
+
+\subsection{Encoder Transformer \& MLP}
+Our third architecture (Figure \ref{fig:transf-enc}) consists of the following components:
+
+\subsubsection{Input Representation}
+Each utterance is embedded as a fixed-size vector of 1536 dimensions which is the concatenation of WaveLM features $x_1 \in R^{768}$ for the audio modality and RoBERTa features $x_2 \in R^{768}$. Due to the conversational context, a sliding window of adjacent utterances can be aggregated; the window with the best results was 2.
+
+\subsubsection{Transformer Encoder}
+The core of the architecture is a single-layer Transformer Encoder. The encoder processes the 1536-dimensional input using multi-head self-attention (8 heads) and a feed-forward network with an intermediate dimensionality of 1048. Dropout regularization with a rate of 0.45 is applied both within the self-attention mechanism and the feed-forward sublayers to mitigate overfitting.
+
+Formally, for an input feature vector $ x \in {R}^{1536} $, the Transformer Encoder computes:
+
+$$ x' = \text{TransformerEncoder}(x) $$
+
+where self-attention enables the model to reweigh and recontextualize different feature dimensions relative to each other.
+
+\subsubsection{Output Layer}
+The output of the Transformer Encoder is passed through a fully connected linear layer that maps the representation to the target emotion space:
+
+$$\hat{y} = \text{Linear}(x') \in \mathbb{R}^{7}$$
+
+where 7 corresponds to the number of emotion classes: \textit{anger, disgust, fear, joy, neutral, sadness}, and \textit{surprise}.
+
+\subsubsection{Loss Function}
+Training is performed using a weighted cross-entropy loss with label smoothing (smoothing factor = 0.1). Class imbalance is addressed by assigning inverse-frequency weights to each emotion class based on their occurrence in the training data, ensuring that majority classes (i.e. Neutral) are adequately penalized during optimization.
+
+\section{Experiments}
+
+\subsection{Setup}
+We evaluate our models on the MELD dataset under the Emotion Prediction in Conversation (EPC) setting, where the goal is to predict the emotion of the final utterance in a dialogue using the preceding context.
+
+\subsection{Results}
+Table~\ref{tab:ours} presents the performance of our models. CNN-1, CNN-2, and CNN-3 are variants with different regularization and hyperparameter values (See Table \ref{tab:cnn_hyperparams}). Our encoder-based transformer model achieves the best macro-F1 score of 22.26\% on the test set, outperforming the CNNs despite significantly lower training accuracy, which indicates better generalization. The decoder-based transformer underperforms in this setting, possibly due to its sequential prediction design, which may not align well with the final-utterance classification task.
+
+\begin{table}[h]
+\centering
+\caption{Performance metrics of our models on MELD.}
+\label{tab:ours}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{Train Acc.} & \textbf{Val. Acc.} & \textbf{Test M-F1} \\
+\midrule
+CNN-1 & 95.57 & 46.94 & 0.10 \\
+CNN-2 & 100.00 & 46.94 & 0.11 \\
+CNN-3 & 100.00 & 41.44 & 0.13 \\
+Transformer Encoder + MLP & 28.27 & 34.50 & \textbf{0.2226} \\
+Transformer Decoder + MLP &  34.02 & 27.46 & 0.1349 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Analysis}
+Interestingly, although CNN-based models achieve perfect training accuracy, their test performances are significantly weaker than those of the transformer encoder, suggesting overfitting. The transformer encoder model generalizes better despite low training accuracy, indicating a more robust representation. Meanwhile, the decoder-based model, which was designed to predict embeddings auto-regressively, struggled to match the encoder’s performance on the final utterance classification, likely due to mismatch between training objective and evaluation setup.
+
+\section{Discussion}
+
+This work explored alternative architectures to simplify the model proposed in \textit{"Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction and Recognition in Conversation"} \cite{ERCFusionModel}. Among the different approaches evaluated, the encoder-based architecture showed the most promising results.
+
+The baseline model had a significant number of modules compared to our work. This substantial difference in model complexity, coupled with our results, shows that emotion prediction in multi-modal, conversational contexts is more challenging than traditional emotion recognition. Achieving strong performance in this task may require more elaborated mechanisms to capture nuanced and contextual cues. Our model achieved a macro-F1 score of 22\%, in contrast to the baseline's 46\%, representing a considerable performance gap. This highlights both the difficulty of the task and the room for further architectural innovation.
+
+While our best model did not surpass the baseline in terms of accuracy and macro-F1 on the MELD test set, it introduces a novel architecture with significantly fewer parameters and reduced complexity. Due to missing implementation details in the original paper, we were unable to perform a direct comparison of inference speed. However, based on the model’s size and structure, we are confident that it would achieve faster inference under comparable computational conditions.
+
+Our results suggest that this model can serve as a stepping stone toward a more efficient and competitive solution. One of the key challenges we encountered was the limited size and imbalance of the MELD dataset, which constrained the model's ability to generalize across under-represented emotions (See confusion matrices in Figures \ref{fig:cnn_confusion_matrix}, \ref{fig:dec_confusion_matrix}, \ref{fig:enc_confusion_matrix}).  Although we applied class balancing techniques such as weighted loss and oversampling, these are not as good as richer, more diverse training sets. Future work could benefit from incorporating additional datasets, such as RAVDESS \cite{livingstone2018ravdess} and IEMOCAP \cite{busso2008iemocap}, which may enhance performance by providing broader emotional context.
+
+In today’s context, inference speed and computational cost are critical considerations in machine learning deployment. By targeting these aspects, our proposed architecture offers a foundation for future systems that prioritize both efficiency and scalability without compromising accuracy. We believe this work contributes valuable insights toward building practical and accessible emotion recognition systems.
+
+
+\clearpage
+\section{Annex}
+
+\subsection{Figures}
+
+\begin{figure}[hbtp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Images/transformer_decoder.png}
+    \caption{Overview of the joint utterance decoding and emotion classification architecture. Textual and audio features extracted from RoBERTa and WavLM are merged and pooled to create utterance embeddings. A Transformer-based utterance decoder predicts the next utterance representation, which is then classified into emotion categories using an MLP. Training minimizes a weighted sum of cross-entropy loss and cosine similarity loss.}
+    \label{fig:transf-dec}
+\end{figure}
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Images/cnn_confusion_matrix.png}
+  \caption{Confusion matrix of CNN Architecture}
+  \label{fig:cnn_confusion_matrix}
+\end{figure}
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Images/transformer_encoder.png}
+  \caption{Overview of the joint utterance encoding and emotion classification architecture. Encoder transformer finds a representation of the utterance multimodal features and later classifies it using a fully connected layer. Training minimizes a weighted sum of cross-entropy loss.}
+  \label{fig:transf-enc}
+\end{figure}
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Images/decoder_confusion_matrix.png}
+  \caption{Confusion matrix of Decoder Architecture}
+  \label{fig:dec_confusion_matrix}
+\end{figure}
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Images/encoder_confusion_matrix.png}
+  \caption{Confusion matrix of Encoder Architecture}
+  \label{fig:enc_confusion_matrix}
+\end{figure}
+
+\begin{figure*}[hbtp]
     \centering
 
     \begin{minipage}{0.6\textwidth}
@@ -275,7 +396,7 @@ CNN-3          & 0.0848              & 100.00                        & 41.44    
     \label{fig:cnn1_training_metrics}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}[hbtp]
     \centering
 
     \begin{minipage}{0.6\textwidth}
@@ -307,7 +428,7 @@ CNN-3          & 0.0848              & 100.00                        & 41.44    
     \label{fig:cnn2_training_metrics}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}[hbtp]
     \centering
 
     \begin{minipage}{0.6\textwidth}
@@ -339,200 +460,11 @@ CNN-3          & 0.0848              & 100.00                        & 41.44    
     \label{fig:cnn3_training_metrics}
 \end{figure*}
 
-
-We can see in training Figures \ref{fig:cnn1_training_metrics}, \ref{fig:cnn2_training_metrics}, \ref{fig:cnn3_training_metrics} and Table \ref{tab:cnn_metrics} that even though these models were better than the others, the validation metrics keep vacillating without any significant improvement trend.
-Even though we tried multiple regularization methods (label smoothing, dropout, weight decay, early stopping) to help on overfitting and tuning hyperparameter, our effort did not produce any satisfying results. Hence, we focused on other architectures.
-
-\subsection{Decoder Transformer \& MLP}
-Our second architecture consists of two components: an utterance decoder and an emotion classifier, trained jointly (Figure~\ref{fig:transf-dec}). Each utterance is represented as a sequence of feature vectors (dimension 1536) extracted with RoBERTa and WavLM. A self-attention pooling first compresses each utterance into a single embedding. The resulting dialogue representation is passed to a transformer decoder (utterance decoder) that predicts the embedding of the next utterance at each timestep. To maintain causality, future utterances are masked during decoding, and learnable positional embeddings are added to the input sequence.
-
-The predicted embeddings are used for two tasks. First, we minimize a cosine similarity loss ($\mathcal{L}_{cosine}$) against the pooled ground-truth embeddings of the next utterance. Second, the predicted embeddings are input into a multi-layer perceptron (MLP) classifier. This classifier contains layer normalization, a hidden GELU layer, dropout and a final output layer to predict emotion labels using cross-entropy loss ($\mathcal{L}_{CE}$) with class weighting and label smoothing. The total training objective is a weighted sum of the classification loss and the cosine similarity loss:
-\[
-\mathcal{L}=\mathcal{L}_{CE}+ \lambda_{cosine} \mathcal{L}_{cosine}
-\]
-where $\lambda_{cosine}$ controls the contribution of the similarity loss. By jointly modeling next-utterance prediction and emotion recognition, the architecture captures both semantic continuity and emotional dynamics across dialogues. 
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\linewidth]{Images/transformer_decoder.png}
-    \caption{Overview of the joint utterance decoding and emotion classification architecture. Textual and audio features extracted from RoBERTa and WavLM are merged and pooled to create utterance embeddings. A Transformer-based utterance decoder predicts the next utterance representation, which is then classified into emotion categories using an MLP. Training minimizes a weighted sum of cross-entropy loss and cosine similarity loss.}
-    \label{fig:transf-dec}
-\end{figure}
-
-
-\subsection{Encoder Transformer \& MLP}
-Our third architecture consists of the following components:
-
-\subsubsection{Input Representation}
-Each utterance is embedded as a fixed-size vector of 1536 dimensions which is the concatenation of WaveLM features $x_1 \in R^{768}$ for the audio modality and RoBERTa features $x_2 \in R^{768}$. Due to the conversational context, a sliding window of adjacent utterances can be aggregated; the window with the best results was 2.
-
-\subsubsection{Transformer Encoder}
-The core of the architecture is a single-layer Transformer Encoder. The encoder processes the 1536-dimensional input using multi-head self-attention (8 heads) and a feed-forward network with an intermediate dimensionality of 1048. Dropout regularization with a rate of 0.45 is applied both within the self-attention mechanism and the feed-forward sublayers to mitigate overfitting.
-
-Formally, for an input feature vector $ x \in {R}^{1536} $, the Transformer Encoder computes:
-
-$$ x' = \text{TransformerEncoder}(x) $$
-
-where self-attention enables the model to reweigh and recontextualize different feature dimensions relative to each other.
-
-\subsubsection{Output Layer}
-The output of the Transformer Encoder is passed through a fully connected linear layer that maps the representation to the target emotion space:
-
-$$\hat{y} = \text{Linear}(x') \in \mathbb{R}^{7}$$
-
-where 7 corresponds to the number of emotion classes: \textit{anger, disgust, fear, joy, neutral, sadness}, and \textit{surprise}.
-
-\subsubsection{Loss Function}
-Training is performed using a weighted cross-entropy loss with label smoothing (smoothing factor = 0.1). Class imbalance is addressed by assigning inverse-frequency weights to each emotion class based on their occurrence in the training data, ensuring that majority classes (i.e. Neutral) are adequately penalized during optimization.
-
-\begin{figure}
-  \centering
-  \includegraphics[width=0.8\linewidth]{Images/transformer_encoder.png}
-  \caption{Overview of the joint utterance encoding and emotion classification architecture. Encoder transformer finds a representation of the utterance multimodal features and later classifies it using a fully connected layer. Training minimizes a weighted sum of cross-entropy loss.}
-  \label{fig:transf-dec}
-\end{figure}
-
-\section{Experiments}
-
-\subsection{Setup}
-We evaluate our models on the MELD dataset under the Emotion Prediction in Conversation (EPC) setting, where the goal is to predict the emotion of the final utterance in a dialogue using the preceding context.
-
-\subsection{Results}
-Table~\ref{tab:ours} presents the performance of our models. CNN-1, CNN-2, and CNN-3 are variants with increasing depth or reduced regularization. Our encoder-based transformer model achieves the best macro-F1 score of 22.26\% on the test set, outperforming the CNNs despite significantly lower training accuracy, which indicates better generalization. The decoder-based transformer underperforms in this setting, possibly due to its sequential prediction design, which may not align well with the final-utterance classification task.
-
-\begin{table}[h]
-\centering
-\caption{Performance metrics of our models on MELD.}
-\label{tab:ours}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-\textbf{Model} & \textbf{Train Acc.} & \textbf{Val. Acc.} & \textbf{Test M-F1} \\
-\midrule
-CNN-1 & 95.57 & 46.94 & 0.10 \\
-CNN-2 & 100.00 & 46.94 & 0.11 \\
-CNN-3 & 100.00 & 41.44 & 0.13 \\
-Transformer Encoder + MLP & 28.27 & 34.50 & \textbf{0.2226} \\
-Transformer Decoder + MLP & -- & -- & 0.1349 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsection{Analysis}
-Interestingly, although CNN-based models achieve perfect training accuracy, their validation and test performance are significantly weaker than those of the transformer encoder, suggesting overfitting. The transformer encoder model generalizes better despite low training accuracy, indicating a more robust representation. Meanwhile, the decoder-based model, which was designed to predict embeddings autoregressively, struggled to match the encoder’s performance on the final utterance classification, likely due to mismatch between training objective and evaluation setup.
-
-
-\section{Discussion}
-This work has explored different architecture to simplify the proposal of \textit{"Emotional Cues Extraction and Fusion for Multi-modal Emotion Prediction
-and Recognition in Conversation"} \cite{ERCFusionModel}. From our experimentation, we saw that some approaches were more performing than others and that some satisfying result can be reached through our simpler architecture.
-Even though our best model did not improve upon the accuracy and macro F1 score of the MELD test set, it proposes a novel architecture with fewer parameters and less complexity. Unfortunately, we could not compare our inference speed with the baseline reference article due to missing accessible data from their side, but we are confident that our solution would have faster inference in a comparable compute context. 
-
-Also, this report could be a step-stone toward an even better and lighter proposal. One of the encountered issue was the size of the MELD dataset that restrained the variety of emotions our models were trained on. The confusion matrices have shown that some emotions were greatly under-represented. Even if we used over sampling to compensate, it does not gives as much of a quality training set as true additional samples. Other datasets exist and, with additional time and efforts on pre-processing, could provide additional cues to our models. RAVDESS \cite{livingstone2018ravdess} and IEMOCAP \cite{busso2008iemocap} datasets are some examples.
-
-In today context, inference time and cost are important aspects of machine learning. We proposed an architecture toward optimizing both and toward more efficient models. Our work lays a foundation for future systems that are not only accurate but also practical and scalable in real-world settings.
-
-\section{Optional sections if needed}
-
-\subsection{Figures}
-
-You may want to include figures in the paper to illustrate
-your approach and results. Such artwork should be centered,
-legible, and separated from the text. Lines should be dark and at
-least 0.5~points thick for purposes of reproduction, and text should
-not appear on a gray background.
-
-Label all distinct components of each figure. If the figure takes the
-form of a graph, then give a name for each axis and include a legend
-that briefly describes each curve. Do not include a title inside the
-figure; instead, the caption should serve this function.
-
-Number figures sequentially, placing the figure number and caption
-\emph{after} the graphics, with at least 0.1~inches of space before
-the caption and 0.1~inches after it, as in
-Figure~\ref{icml-historical}. The figure caption should be set in
-9~point type and centered unless it runs two or more lines, in which
-case it should be flush left. You may float figures to the top or
-bottom of a column, and you may set wide figures across both columns
-(use the environment \texttt{figure*} in \LaTeX). Always place
-two-column figures at the top or bottom of the page.
-
-\subsection{Algorithms}
-
-If you are using \LaTeX, please use the ``algorithm'' and ``algorithmic''
-environments to format pseudocode. These require
-the corresponding stylefiles, algorithm.sty and
-algorithmic.sty, which are supplied with this package.
-Algorithm~\ref{alg:example} shows an example.
-
-\begin{algorithm}[tb]
-   \caption{Bubble Sort}
-   \label{alg:example}
-\begin{algorithmic}
-   \STATE {\bfseries Input:} data $x_i$, size $m$
-   \REPEAT
-   \STATE Initialize $noChange = true$.
-   \FOR{$i=1$ {\bfseries to} $m-1$}
-   \IF{$x_i > x_{i+1}$}
-   \STATE Swap $x_i$ and $x_{i+1}$
-   \STATE $noChange = false$
-   \ENDIF
-   \ENDFOR
-   \UNTIL{$noChange$ is $true$}
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{Tables}
-
-You may also want to include tables that summarize material. Like
-figures, these should be centered, legible, and numbered consecutively.
-However, place the title \emph{above} the table with at least
-0.1~inches of space before the title and the same after it, as in
-Table~\ref{sample-table}. The table title should be set in 9~point
-type and centered unless it runs two or more lines, in which case it
-should be flush left.
-
-% Note use of \abovespace and \belowspace to get reasonable spacing
-% above and below tabular lines.
-
-\begin{table}[t]
-\caption{Classification accuracies for naive Bayes and flexible
-Bayes on various data sets.}
-\label{sample-table}
-\vskip 0.15in
-\begin{center}
-\begin{small}
-\begin{sc}
-\begin{tabular}{lcccr}
-\toprule
-Data set & Naive & Flexible & Better? \\
-\midrule
-Breast    & 95.9$\pm$ 0.2& 96.7$\pm$ 0.2& $\surd$ \\
-Cleveland & 83.3$\pm$ 0.6& 80.0$\pm$ 0.6& $\times$\\
-Glass2    & 61.9$\pm$ 1.4& 83.8$\pm$ 0.7& $\surd$ \\
-Credit    & 74.8$\pm$ 0.5& 78.3$\pm$ 0.6&         \\
-Horse     & 73.3$\pm$ 0.9& 69.7$\pm$ 1.0& $\times$\\
-Meta      & 67.1$\pm$ 0.6& 76.5$\pm$ 0.5& $\surd$ \\
-Pima      & 75.1$\pm$ 0.6& 73.9$\pm$ 0.5&         \\
-Vehicle   & 44.9$\pm$ 0.6& 61.5$\pm$ 0.4& $\surd$ \\
-\bottomrule
-\end{tabular}
-\end{sc}
-\end{small}
-\end{center}
-\vskip -0.1in
-\end{table}
-
-Tables contain textual material, whereas figures contain graphical material.
-Specify the contents of each row and column in the table's topmost
-row. Again, you may float tables to a column's top or bottom, and set
-wide tables across both columns. Place two-column tables at the
-top or bottom of the page.
-
+\clearpage
 
 % In the unusual situation where you want a paper to appear in the
 % references without citing it in the main text, use \nocite
-\nocite{langley00}
+% \nocite{langley00}
 
 \bibliography{example_paper}
 \bibliographystyle{icml2018}
